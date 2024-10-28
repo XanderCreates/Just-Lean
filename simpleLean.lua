@@ -42,8 +42,7 @@ local cfg = {
             left = models.MODELFILE.PATH.TO.LEFT.LEG, --can be omitted
             right = models.MODELFILE.PATH.TO.RIGHT.LEG
         }
-    },
-    headStopper = nil --optional
+    }
 }
 
 ---[[Aliases]]---
@@ -54,24 +53,18 @@ local vec3 = vectors.vec3
 local sin = math.sin
 local cos = math.cos
 local rad = math.rad
+local abs = math.abs
+local ast = assert
 local part = cfg.parts
 local control = cfg.control
 ---[[Init Vars]]---
 local lean, breathe, vHead, lHead = vec3(0,0,0)
+--local headRotation = part.head:getRot()
 local leanIntensity = 0
 
 ---[[Script]]---
 function events.entity_init()
     p = player
-
-    if not control.vanillaHead then
-        assert(type(part.head) == "ModelPart", "ModelPart Expected, Got "..type(part.head))
-        if cfg.headStopper and control.vanillaHead == false then
-            assert(type(cfg.headStopper) == "Animation", "Animation Expected, got "..type(cfg.headStopper))
-            cfg.headStopper:play()
-        end
-    end
-
 end
 
 local function velocitymod()
@@ -84,20 +77,18 @@ local function velocitymod()
     end
    
 end
-
+local selHead = control.vanillaHead and vHead or vec(0,0,0)
+local divmod = control.vanillaHead and 12 or 8
 function events.tick()
     vHead = (((vanilla_model.HEAD:getOriginRot())+180)%360)-180 --Vanilla Head
-    local headRotation = part.head:getRot()
+    local headRotation = part.head:getOffsetRot()
     local targetVel = velocitymod()
+    selHead = control.vanillaHead and vHead or headRotation
+    divmod = control.vanillaHead and 12 or 8
     if not control.stopLean then
         breathe = vec3(sin(world.getTime()/16)*2, cos(world.getTime()/16)/2,0)
-        if control.vanillaHead then
-            leanIntensity = min(max(sin(rad(vHead.x/2 * 0.75 / targetVel)) * 45, control.minAngle), control.maxAngle)
-            lean = vec3(leanIntensity, vHead.y/4, (part.torso:getOffsetRot().y+vHead.y)*(math.abs(math.rad(vHead.x)))/12)
-        else
-            leanIntensity = min(max(sin(rad(headRotation.x * 0.75 / targetVel)) * 45, control.minAngle), control.maxAngle)
-            lean = vec3(leanIntensity, headRotation.y/2, (part.torso:getOffsetRot().y+headRotation.y)*(math.abs(math.rad(headRotation.x)))/8)
-        end
+            leanIntensity = min(max(sin(rad(selHead.x/2 * 0.75 / targetVel)) * 45, control.minAngle), control.maxAngle)
+            lean = vec3(leanIntensity,  selHead.y/4, (part.torso:getOffsetRot().y+vHead.y)*(abs(rad(vHead.x)))/divmod)
     else
         lean = vec3(0,0,0)
     end
@@ -105,10 +96,10 @@ end
 
 function events.render(delta)
     local sLean = math.lerp(part.torso:getOffsetRot(), lean+(breathe/2), 0.0725*delta)
-
     if not control.vanillaHead then
-        lHead = math.lerp(part.head:getRot(), vHead/vec3(1.875,2,1.875), 0.3*delta)
-        part.head:setRot(lHead)
+        part.head:setRot(-vanilla_model.HEAD:getOriginRot())
+        lHead = math.lerp(part.head:getOffsetRot(), vHead/vec3(1.875,2,1.875), 0.3*delta)
+        part.head:setOffsetRot(lHead)
     end
     
     if part.arms and part.arms.left and part.arms.right then
@@ -119,13 +110,12 @@ function events.render(delta)
     end
     if part.legs and part.legs.right and part.legs.left then
         if control.influenceLegs then
-            part.legs.left:setPos(0,0,math.rad(sLean.y))
-            part.legs.right:setPos(0,0,math.rad(-sLean.y))
+            part.legs.left:setPos(0,0,rad(sLean.y))
+            part.legs.right:setPos(0,0,rad(-sLean.y))
         end
     end
 
     part.torso:setOffsetRot(sLean)
-    
 end
 
 return cfg --if you want external control.
