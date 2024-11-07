@@ -49,16 +49,15 @@ local cfg = {
 local p = nil --actual value set in entity initialization (player)
 local min = math.min
 local max = math.max
-local vec3 = vectors.vec3
+local lerp = math.lerp
 local sin = math.sin
-local cos = math.cos
 local rad = math.rad
 local abs = math.abs
-local ast = assert
+local vec3 = vectors.vec3
 local part = cfg.parts
 local control = cfg.control
 ---[[Init Vars]]---
-local lean, breathe, vHead, lHead = vec3(0,0,0)
+local lean, vHead, lHead = vec3(0,0,0)
 --local headRotation = part.head:getRot()
 local leanIntensity = 0
 
@@ -77,28 +76,34 @@ local function velocitymod()
     end
    
 end
-local selHead = control.vanillaHead and vHead or vec(0,0,0)
-local divmod = control.vanillaHead and 12 or 8
+
 function events.tick()
+    if control.stopHead then vHead = vec(0,0,0) return end
     vHead = (((vanilla_model.HEAD:getOriginRot())+180)%360)-180 --Vanilla Head
+    if control.stopLean then return end
     local headRotation = part.head:getOffsetRot()
     local targetVel = velocitymod()
-    selHead = control.vanillaHead and vHead or headRotation
-    divmod = control.vanillaHead and 12 or 8
+    local selHead = control.vanillaHead and vHead:toRad() or headRotation:toRad()
+    local divmod = control.vanillaHead and 12 or 8
     if not control.stopLean then
-        breathe = vec3(sin(world.getTime()/16)*2, cos(world.getTime()/16)/2,0)
-            leanIntensity = min(max(sin(rad(selHead.x/2 * 0.75 / targetVel)) * 45, control.minAngle), control.maxAngle)
-            lean = vec3(leanIntensity,  selHead.y/4, (part.torso:getOffsetRot().y+vHead.y)*(abs(rad(vHead.x)))/divmod)
+        local t = sin(world.getTime() / 16.0)
+        local breathe = vec3(
+                t * 2.0,
+                math.sqrt(1 - (t * t)) / 2.0,
+                0.0
+                )
+            leanIntensity = min(max(sin((selHead.x/2 * 0.75 / targetVel)) * 45, control.minAngle), control.maxAngle)
+            lean = vec3(leanIntensity,  selHead.y/4, (part.torso:getOffsetRot().y+vHead.y)*(abs(rad(vHead.x)))/divmod)+breathe
     else
         lean = vec3(0,0,0)
     end
 end
 
 function events.render(delta)
-    local sLean = math.lerp(part.torso:getOffsetRot(), lean+(breathe/2), 0.0725*delta)
+    local sLean = math.lerp(part.torso:getOffsetRot(), lean, 0.0725*delta)
     if not control.vanillaHead then
         part.head:setRot(-vanilla_model.HEAD:getOriginRot())
-        lHead = math.lerp(part.head:getOffsetRot(), vHead/vec3(1.875,2,1.875), 0.3*delta)
+        lHead = lerp(part.head:getOffsetRot(), vHead/vec3(1.875,2,1.875), 0.3*delta)
         part.head:setOffsetRot(lHead)
     end
     
