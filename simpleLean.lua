@@ -58,7 +58,6 @@ local part = cfg.parts
 local control = cfg.control
 ---[[Init Vars]]---
 local lean, vHead, lHead = vec3(0,0,0)
---local headRotation = part.head:getRot()
 local leanIntensity = 0
 
 ---[[Script]]---
