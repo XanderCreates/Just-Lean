@@ -77,12 +77,11 @@ local function velocitymod()
 end
 
 function events.tick()
-    if control.stopHead then vHead = vec(0,0,0) return end
     vHead = (((vanilla_model.HEAD:getOriginRot())+180)%360)-180 --Vanilla Head
     if control.stopLean then return end
     local headRotation = part.head:getOffsetRot()
     local targetVel = velocitymod()
-    local selHead = control.vanillaHead and vHead:toRad() or headRotation:toRad()
+    local selHead = control.vanillaHead and vHead:toRad() or not control.vanillaHead and headRotation:toRad()
     local divmod = control.vanillaHead and 12 or 8
     if not control.stopLean then
         local t = sin(world.getTime() / 16.0)
@@ -101,9 +100,11 @@ end
 function events.render(delta)
     local sLean = math.lerp(part.torso:getOffsetRot(), lean, 0.0725*delta)
     if not control.vanillaHead then
-        part.head:setRot(-vanilla_model.HEAD:getOriginRot())
+        vanilla_model.HEAD:setRot(0,0,0)
         lHead = lerp(part.head:getOffsetRot(), vHead/vec3(1.875,2,1.875), 0.3*delta)
         part.head:setOffsetRot(lHead)
+    else
+        vanilla_model.HEAD:setRot(math.lerp(vanilla_model.HEAD:getRot() or vHead, vHead/vec3(1.875,2,1.875), 0.3 * delta))
     end
     
     if part.arms and part.arms.left and part.arms.right then
