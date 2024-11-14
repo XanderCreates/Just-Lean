@@ -97,14 +97,15 @@ function events.tick()
     end
 end
 
-function events.render(delta)
-    local sLean = math.lerp(part.torso:getOffsetRot(), lean, 0.0725*delta)
+function events.render()
+local delta = (1 / min(max(client.getFPS(), 30), 100)) * 20
+    local sLean = lerp(part.torso:getOffsetRot(), lean, 0.0725*delta)
     if not control.vanillaHead then
         vanilla_model.HEAD:setRot(0,0,0)
         lHead = lerp(part.head:getOffsetRot(), vHead/vec3(1.875,2,1.875), 0.3*delta)
         part.head:setOffsetRot(lHead)
     else
-        vanilla_model.HEAD:setRot(math.lerp(vanilla_model.HEAD:getRot() or vHead, vHead/vec3(1.875,2,1.875), 0.3 * delta))
+        vanilla_model.HEAD:setRot(lerp(vanilla_model.HEAD:getRot() or vHead, vHead/vec3(1.875,2,1.875), 0.3 * delta))
     end
     
     if part.arms and part.arms.left and part.arms.right then
