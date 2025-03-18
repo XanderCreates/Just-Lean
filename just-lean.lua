@@ -108,15 +108,15 @@ function events.tick()
     end
 end
 
-function events.render()
-local delta = (1 / min(max(client.getFPS(), 30), 100)) * 20
-    local sLean = inOutSine(part.torso:getOffsetRot(), lean, 0.0725*delta)
+function events.render(delta)
+--local delta = (1 / min(max(client.getFPS(), 30), 100)) * 20
+    local sLean = inOutSine(part.torso:getOffsetRot(), lean, 0.2*delta)
     if not control.vanillaHead then
         vanilla_model.HEAD:setRot(0,0,0)
         lHead = inOutSine(part.head:getOffsetRot(), vHead/vec3(1.875,2,1.875), 0.3*delta)
         part.head:setOffsetRot(lHead)
     else
-        vanilla_model.HEAD:setRot(inOutSine(vanilla_model.HEAD:getRot() or vHead, vHead/vec3(1.875,2,1.875), 0.3 * delta))
+        vanilla_model.HEAD:setRot(inOutSine(vanilla_model.HEAD:getRot() or vHead, vHead/vec3(1.875,2,1.875), 0.3*delta))
     end
     
     if part.arms and part.arms.left and part.arms.right then
