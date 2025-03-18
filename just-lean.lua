@@ -55,11 +55,17 @@ local sin = math.sin
 local rad = math.rad
 local abs = math.abs
 local vec3 = vectors.vec3
+local pi = math.pi
 local part = cfg.parts
 local control = cfg.control
 ---[[Init Vars]]---
 local lean, vHead, lHead = vec3(0,0,0)
 local leanIntensity = 0
+
+  local function inOutSine(a, b, t)
+    return (a - b) / 2 * (cos(pi * t) - 1) + a
+  end
+
 
 ---[[Script]]---
 function events.entity_init()
@@ -104,13 +110,13 @@ end
 
 function events.render()
 local delta = (1 / min(max(client.getFPS(), 30), 100)) * 20
-    local sLean = lerp(part.torso:getOffsetRot(), lean, 0.0725*delta)
+    local sLean = inOutSine(part.torso:getOffsetRot(), lean, 0.0725*delta)
     if not control.vanillaHead then
         vanilla_model.HEAD:setRot(0,0,0)
-        lHead = lerp(part.head:getOffsetRot(), vHead/vec3(1.875,2,1.875), 0.3*delta)
+        lHead = inOutSine(part.head:getOffsetRot(), vHead/vec3(1.875,2,1.875), 0.3*delta)
         part.head:setOffsetRot(lHead)
     else
-        vanilla_model.HEAD:setRot(lerp(vanilla_model.HEAD:getRot() or vHead, vHead/vec3(1.875,2,1.875), 0.3 * delta))
+        vanilla_model.HEAD:setRot(inOutSine(vanilla_model.HEAD:getRot() or vHead, vHead/vec3(1.875,2,1.875), 0.3 * delta))
     end
     
     if part.arms and part.arms.left and part.arms.right then
