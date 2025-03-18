@@ -63,7 +63,7 @@ local lean, vHead, lHead = vec3(0,0,0)
 local leanIntensity = 0
 
   local function inOutSine(a, b, t)
-    return (a - b) / 2 * (cos(pi * t) - 1) + a
+    return (a - b) / 2 * (math.cos(pi * t) - 1) + a
   end
 
 
