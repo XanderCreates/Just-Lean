@@ -27,6 +27,7 @@ local cfg = {
         stopLean = false,
         influenceArms = true,
         influenceLegs = true,
+        oldLean = false,
         vanillaHead = true, --Change as needed
         minAngle = -22.5, --in degrees
         maxAngle = 22.5 --in degrees
@@ -90,7 +91,11 @@ function events.tick()
                 math.sqrt(1 - (t * t)) / 2.0,
                 0.0
                 )
+        if control.oldLean then
             leanIntensity = min(max(sin((selHead.x/2 * 0.75 / targetVel)) * 45, control.minAngle), control.maxAngle)
+        else
+            leanIntensity = min(max(sin(selHead.x / targetVel) * 45.5, control.minAngle), control.maxAngle)
+        end
             lean = vec3(leanIntensity,  selHead.y/4, (part.torso:getOffsetRot().y+vHead.y)*(abs(rad(vHead.x)))/divmod)+breathe
     else
         lean = vec3(0,0,0)
