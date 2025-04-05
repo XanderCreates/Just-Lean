@@ -109,7 +109,7 @@ function events.tick()
         if control.oldLean then
             leanIntensity = min(max((sin((selHead.x/2 * 0.75 / targetVel)) * 45) * (control.scale.x or 1.0), control.minLean.x), control.maxLean.x)
         else
-            leanIntensity = min(max((sin(selHead.x / targetVel) * 45.5) * (control.scale.x or 1.0), control.minLean.x), control.maxLean.x)
+            leanIntensity = min(max((sin(selHead.x / targetVel) * (control.const or 45.5)) * (control.scale.x or 1.0), control.minLean.x), control.maxLean.x)
         end
         lean = vec3(
             leanIntensity,
