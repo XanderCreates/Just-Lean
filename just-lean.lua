@@ -44,6 +44,7 @@ local cfg = {
         const = 45.5
     },
     parts = {
+        root = models.MODELFILE.PATH.TO.ROOT --kinda useless rn
         head = models.MODELFILE.PATH.TO.HEAD,
         torso = models.MODELFILE.PATH.TO.TORSO, --Make sure the pivot of the Torso is in an appropriate position for your model! (Say, 0,12,0 on a standard player model)
         arms = {
@@ -110,11 +111,12 @@ function events.tick()
             leanIntensity = min(max((sin((selHead.x/2 * 0.75 / targetVel)) * 45) * (control.scale.x or 1.0), control.minLean.x), control.maxLean.x)
         else
             leanIntensity = min(max((sin(selHead.x / targetVel) * (control.const or 45.5)) * (control.scale.x or 1.0), control.minLean.x), control.maxLean.x)
+            --leanIntensity = ((selHead.x / targetVel) * control.const) / 4
         end
         lean = vec3(
             leanIntensity,
             min(max(sin(selHead.y) * (control.const or 45.5) * (player:isSneaking() and 0.1 or (control.scale.y or 1.0)), control.minLean.y or -15.0), control.maxLean.y or 15.0),
-            0
+            vHead.y*0.075
         )+breathe
     else
         lean = vec3(0,0,0)
@@ -122,24 +124,31 @@ function events.tick()
 end
 
 function events.render(delta)
-    local sLean = inOutSine(part.torso:getOffsetRot(), lean, 0.1725)
+    local sLean = inOutSine(part.torso:getOffsetRot(), lean, 0.1625)
+
+    lHead = inOutSine(part.head:getOffsetRot(), vHead/vec3(1.875,2,1.875), 0.3)
+    vanilla_model.HEAD:setRot(0,0,0)
     if not control.vanillaHead then
-        vanilla_model.HEAD:setRot(0,0,0)
-        lHead = inOutSine(part.head:getOffsetRot(), vHead/vec3(1.875,2,1.875), 0.3)
-        part.head:setOffsetRot(lHead)
+        part.head:setOffsetRot(inOutSine(vanilla_model.HEAD:getOriginRot() or vHead, vHead/vec3(1.875,2,1.875), 0.3) - (sLean*0.5) + vec(0,0,(-lHead.y*0.0625)))
     else
-        vanilla_model.HEAD:setRot(inOutSine(vanilla_model.HEAD:getRot() or vHead, vHead/vec3(1.875,2,1.875), 0.3))
+        vanilla_model.HEAD:setOffsetRot(inOutSine(vanilla_model.HEAD:getOriginRot() or vHead, vHead/vec3(1.875,2,1.875), 0.3) - (sLean*0.5) + vec(0,0,(-lHead.y*0.0625)))
     end
     if part.arms and part.arms.left and part.arms.right then
         if control.influenceArms then
-            part.arms.left:setOffsetRot(sLean*vec3(-0.5,0.5,0.5))
-            part.arms.right:setOffsetRot(sLean*vec3(-0.5,0.5,0.5))
+            part.arms.left:setOffsetRot((lHead*-0.0625) + vec(0,0,-lHead.y*0.0625))
+            part.arms.right:setOffsetRot((lHead*-0.0625) + vec(0,0,-lHead.y*0.0625))
         end
     end
     if part.legs and part.legs.right and part.legs.left then
         if control.influenceLegs then
-            part.legs.left:setPos(0,0,rad(sLean.y))
-            part.legs.right:setPos(0,0,rad(-sLean.y))
+            part.legs.left:setPos(0,0,lHead.y*0.0125)
+            part.legs.right:setPos(0,0,-lHead.y*0.0125)
+            part.legs.left:setRot(
+                (sLean.y*0.0625) - (sLean.x*0.075),
+                0,
+                0
+            )
+            part.legs.right:setRot((-sLean.y*0.0625) - (sLean.x*0.075),0,0)
         end
     end
 
