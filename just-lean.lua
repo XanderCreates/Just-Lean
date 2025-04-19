@@ -41,7 +41,10 @@ local cfg = {
             x = 1.0,
             y = 1.0
         },
-        const = 45.5
+        const = 45.5,
+        leanspeed = 0.1625,
+        headspeed = 0.5,
+        factor = 0.5
     },
     parts = {
         head = models.MODELFILE.PATH.TO.HEAD,
@@ -130,15 +133,15 @@ function events.tick()
 end
 
 function events.render(delta)
-    local sLean = inOutSine(part.torso:getOffsetRot(), lean, control.leanspeed)
+    local sLean = inOutSine(part.torso:getOffsetRot(), lean, control.leanspeed or 0.1625)
     local sBob = inOutSine(part.root:getPos(), walkbob*2, 0.3)
-    lHead = inOutSine(part.head:getOffsetRot(), vHead/vec3(1.875,2,1.875), control.headspeed)
+    lHead = inOutSine(part.head:getOffsetRot(), vHead/vec3(1.875,2,1.875), control.headspeed or 0.5)
     vanilla_model.HEAD:setRot(0,0,0)
     if not control.vanillaHead then
-        part.head:setOffsetRot(inOutSine(vanilla_model.HEAD:getOriginRot() or vHead, vHead/vec3(1.875,2,1.875), 0.3) - (sLean*0.5) + vec(0,0,(-lHead.y*0.0625)))
+        part.head:setOffsetRot(inOutSine(vanilla_model.HEAD:getOriginRot() or vHead, vHead/vec3(1.875,2,1.875), control.headspeed or 0.3) - (sLean*(control.factor or 0.5)) + vec(0,0,(-lHead.y*0.0625)))
     else
         vanilla_model.HEAD:setOffsetRot(
-        ((inOutSine(vanilla_model.HEAD:getOriginRot() or vHead, vHead/vec3(1.875,2,1.875), 0.3) - (sLean) + vec(0,0,(-lHead.y*0.0625))+180)%360)-180
+        ((inOutSine(vanilla_model.HEAD:getOriginRot() or vHead, vHead/vec3(1.875,2,1.875), control.headspeed or 0.3) - (sLean*(control.factor or 0.5)) + vec(0,0,(-lHead.y*0.0625))+180)%360)-180
     )
     end
     if part.arms and part.arms.left and part.arms.right then
