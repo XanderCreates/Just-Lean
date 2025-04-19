@@ -44,7 +44,6 @@ local cfg = {
         const = 45.5
     },
     parts = {
-        root = models.MODELFILE.PATH.TO.ROOT --kinda useless rn
         head = models.MODELFILE.PATH.TO.HEAD,
         torso = models.MODELFILE.PATH.TO.TORSO, --Make sure the pivot of the Torso is in an appropriate position for your model! (Say, 0,12,0 on a standard player model)
         arms = {
@@ -73,7 +72,7 @@ local control = cfg.control
 ---[[Init Vars]]---
 local lean, vHead, lHead = vec3(0,0,0)
 local leanIntensity = 0
-
+local walkbob = vec3(0,0,0)
   local function inOutSine(a, b, t)
     return (a - b) / 2 * (math.cos(pi * t) - 1) + a
   end
@@ -99,7 +98,8 @@ function events.tick()
     if control.stopLean then return end
     local headRotation = part.head:getOffsetRot()
     local targetVel = velocitymod()
-    local selHead = control.vanillaHead and vHead:toRad() or not control.vanillaHead and headRotation:toRad()
+    local selHead = (control.vanillaHead and (vHead * 0.0125)) or (not control.vanillaHead and (headRotation * 0.0125))
+    --log(selHead)
     if not control.stopLean then
         local t = sin(world.getTime() / 16.0)
         local breathe = vec3(
@@ -111,6 +111,8 @@ function events.tick()
             leanIntensity = min(max((sin((selHead.x/2 * 0.75 / targetVel)) * 45) * (control.scale.x or 1.0), control.minLean.x), control.maxLean.x)
         else
             leanIntensity = min(max((sin(selHead.x / targetVel) * (control.const or 45.5)) * (control.scale.x or 1.0), control.minLean.x), control.maxLean.x)
+            --log(leanIntensity)
+            --leanIntensity = ((selHead.x / targetVel) * control.const) / 4
         end
         lean = vec3(
             leanIntensity,
@@ -120,28 +122,35 @@ function events.tick()
     else
         lean = vec3(0,0,0)
     end
+    if player:isOnGround() then
+        walkbob = vec3(vanilla_model.RIGHT_LEG:getOriginRot().x*0.005, abs(vanilla_model.RIGHT_LEG:getOriginRot().x*0.01),0)
+    else
+        walkbob = vec3(0,0,0)
+    end
 end
 
 function events.render(delta)
-    local sLean = inOutSine(part.torso:getOffsetRot(), lean, 0.1625)
-
-    lHead = inOutSine(part.head:getOffsetRot(), vHead/vec3(1.875,2,1.875), 0.3)
+    local sLean = inOutSine(part.torso:getOffsetRot(), lean, control.leanspeed)
+    local sBob = inOutSine(part.root:getPos(), walkbob*2, 0.3)
+    lHead = inOutSine(part.head:getOffsetRot(), vHead/vec3(1.875,2,1.875), control.headspeed)
     vanilla_model.HEAD:setRot(0,0,0)
     if not control.vanillaHead then
         part.head:setOffsetRot(inOutSine(vanilla_model.HEAD:getOriginRot() or vHead, vHead/vec3(1.875,2,1.875), 0.3) - (sLean*0.5) + vec(0,0,(-lHead.y*0.0625)))
     else
-        vanilla_model.HEAD:setOffsetRot(inOutSine(vanilla_model.HEAD:getOriginRot() or vHead, vHead/vec3(1.875,2,1.875), 0.3) - (sLean*0.5) + vec(0,0,(-lHead.y*0.0625)))
+        vanilla_model.HEAD:setOffsetRot(
+        ((inOutSine(vanilla_model.HEAD:getOriginRot() or vHead, vHead/vec3(1.875,2,1.875), 0.3) - (sLean) + vec(0,0,(-lHead.y*0.0625))+180)%360)-180
+    )
     end
     if part.arms and part.arms.left and part.arms.right then
         if control.influenceArms then
-            part.arms.left:setOffsetRot((lHead*-0.0625) + vec(0,0,-lHead.y*0.0625))
-            part.arms.right:setOffsetRot((lHead*-0.0625) + vec(0,0,-lHead.y*0.0625))
+            part.arms.left:setOffsetRot((sLean*-0.625) + vec(0,0,-sLean.y*0.1625))
+            part.arms.right:setOffsetRot((sLean*-0.625) + vec(0,0,-sLean.y*0.1625))
         end
     end
     if part.legs and part.legs.right and part.legs.left then
         if control.influenceLegs then
-            part.legs.left:setPos(0,0,lHead.y*0.0125)
-            part.legs.right:setPos(0,0,-lHead.y*0.0125)
+            part.legs.left:setPos(0,0,sLean.y*0.0125)
+            part.legs.right:setPos(0,0,-sLean.y*0.0125)
             part.legs.left:setRot(
                 (sLean.y*0.0625) - (sLean.x*0.075),
                 0,
@@ -153,5 +162,3 @@ function events.render(delta)
 
     part.torso:setOffsetRot(sLean)
 end
-
-return cfg --if you want external control.
