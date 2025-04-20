@@ -114,8 +114,6 @@ function events.tick()
             leanIntensity = min(max((sin((selHead.x/2 * 0.75 / targetVel)) * 45) * (control.scale.x or 1.0), control.minLean.x), control.maxLean.x)
         else
             leanIntensity = min(max((sin(selHead.x / targetVel) * (control.const or 45.5)) * (control.scale.x or 1.0), control.minLean.x), control.maxLean.x)
-            --log(leanIntensity)
-            --leanIntensity = ((selHead.x / targetVel) * control.const) / 4
         end
         lean = vec3(
             leanIntensity,
@@ -125,16 +123,10 @@ function events.tick()
     else
         lean = vec3(0,0,0)
     end
-    if player:isOnGround() then
-        walkbob = vec3(vanilla_model.RIGHT_LEG:getOriginRot().x*0.005, abs(vanilla_model.RIGHT_LEG:getOriginRot().x*0.01),0)
-    else
-        walkbob = vec3(0,0,0)
-    end
 end
 
 function events.render(delta)
     local sLean = inOutSine(part.torso:getOffsetRot(), lean, control.leanspeed or 0.1625)
-    local sBob = inOutSine(part.root:getPos(), walkbob*2, 0.3)
     lHead = inOutSine(part.head:getOffsetRot(), vHead/vec3(1.875,2,1.875), control.headspeed or 0.5)
     vanilla_model.HEAD:setRot(0,0,0)
     if not control.vanillaHead then
